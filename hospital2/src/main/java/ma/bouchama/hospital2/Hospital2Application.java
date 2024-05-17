@@ -2,13 +2,16 @@ package ma.bouchama.hospital2;
 
 import ma.bouchama.hospital2.entities.Patient;
 import ma.bouchama.hospital2.repository.PatientRepository;
+import ma.bouchama.hospital2.security.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 
 import java.util.Date;
 
@@ -16,24 +19,60 @@ import java.util.Date;
 public class Hospital2Application implements CommandLineRunner {
     @Autowired
     private PatientRepository patientRepository;
-
     public static void main(String[] args) {
-
         SpringApplication.run(Hospital2Application.class, args);
     }
-
-
     @Override
     public void run(String... args) throws Exception {
-        patientRepository.save(new Patient(null,"Hajar",new Date(),false,20));
-        patientRepository.save(new Patient(null,"Houria",new Date(),true,50));
-        patientRepository.save(new Patient(null,"Khadija",new Date(),false,17));
-        patientRepository.save(new Patient(null,"Fouad",new Date(),false,25));
+      /*patientRepository.save(new Patient(null , "hajar" , new Date(), false ,40));
+      patientRepository.save(new Patient(null , "halima" , new Date(), true ,120));
+      patientRepository.save(new Patient(null , "houria" , new Date(), false ,70));*/
 
 
     }
+    // @Bean
+    CommandLineRunner commandLineRunner(JdbcUserDetailsManager jdbcUserDetailsManager, PasswordEncoder passwordEncoder)
+    {
+        return args -> {
+            if (!jdbcUserDetailsManager.userExists("user1")) {
+                jdbcUserDetailsManager.createUser(User.withUsername("user1")
+                        .password(passwordEncoder.encode("0000"))
+                        .roles("USER").build());
+            }
+
+            if (!jdbcUserDetailsManager.userExists("user2")) {
+                jdbcUserDetailsManager.createUser(User.withUsername("user2")
+                        .password(passwordEncoder.encode("0000"))
+                        .roles("USER").build());
+            }
+
+            if (!jdbcUserDetailsManager.userExists("admin")) {
+                jdbcUserDetailsManager.createUser(User.withUsername("admin")
+                        .password(passwordEncoder.encode("0000"))
+                        .roles("USER", "ADMIN").build());
+            }
+        };
+    }
+
     @Bean
-    PasswordEncoder  passwordEncoder(){
+    CommandLineRunner commandLineRunnerUserDetails(AccountService accountService)
+    {
+        return args->{
+            accountService.addNewRole("USER");
+            accountService.addNewRole("ADMIN");
+
+            accountService.addNewUser("user11", "12345", "user11@gmail.com", "12345");
+            accountService.addNewUser("user22", "12345", "user22@gmail.com", "12345");
+            accountService.addNewUser("admin0", "12345", "admin0@gmail.com", "12345");
+
+            accountService.addRoleToUser("user11", "USER");
+            accountService.addRoleToUser("user22", "USER");
+            accountService.addRoleToUser("admin0", "ADMIN");
+        };
+    }
+    @Bean
+    PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 }
+
